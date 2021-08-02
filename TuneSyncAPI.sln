@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TuneSyncAPI", "TuneSyncAPI.csproj", "{DD50E463-CD9A-4F2D-A16A-A61F9C87AF44}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{67B072A0-662C-4F92-B929-F9B6EBF8A893}"
+	ProjectSection(SolutionItems) = preProject
+		Util.cs = Util.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DD50E463-CD9A-4F2D-A16A-A61F9C87AF44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD50E463-CD9A-4F2D-A16A-A61F9C87AF44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD50E463-CD9A-4F2D-A16A-A61F9C87AF44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD50E463-CD9A-4F2D-A16A-A61F9C87AF44}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {03BB822A-8FB2-4734-A943-41C36C326E48}
+	EndGlobalSection
+EndGlobal
