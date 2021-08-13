@@ -13,10 +13,11 @@ namespace TuneSyncAPI.Controllers
     [ApiController]
     public class TunesController : ControllerBase
     {
+        //TODO needs to be set in a webui admin panel
+        private const string MusicPath = "/Music/";
 
-        private String musicPath = "/Music/";
+        private AppDB Db { get; }
 
-        public AppDB Db { get; }
         public TunesController(AppDB db)
         {
             Db = db;
@@ -30,11 +31,11 @@ namespace TuneSyncAPI.Controllers
             var tunes = await query.ReadAllTunesAsync();
             var dbFileList = tunes.Select(tune => tune.Path).ToList();
 
-            List<String> folderFileList = Util.scanDirectory(musicPath);
+            List<String> folderFileList = Util.scanDirectory(MusicPath);
 
             foreach (String file in folderFileList)
             {
-                String newFile = file.Replace(musicPath, "");
+                String newFile = file.Replace(MusicPath, "");
 
                 if (!dbFileList.Contains(newFile))
                 {
@@ -59,36 +60,21 @@ namespace TuneSyncAPI.Controllers
                         var tune = tunes.Single(p => p.Path == newFile);
                         if (tune.Artist == string.Empty || tune.Title == string.Empty)
                         {
-                            var tagFile = TagLib.File.Create(musicPath + newFile);
+                            var tagFile = TagLib.File.Create(MusicPath + newFile);
                             await query.UpdateTitleArtistAsync(tune.ID, string.Join(",", tagFile.Tag.AlbumArtists),
                                 tagFile.Tag.Title);
                         }
                     }
                 }
-
             }
 
             return new JsonResult(new ReturnStatus("ok"));
         }
 
-        //GET tunes/available
-        /// <summary>
-        /// Returns 200, used to check if server is reachable
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("available")]
-        public async Task<IActionResult> GetAvailable()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new TunesQuery(Db);
-            var result = await query.ReadAllTunesAsync();
-            return new OkObjectResult(result);
-        }
-
         //GET tunes/{id}
         [HttpGet("{id}")]
-         public async Task<IActionResult> GetDownload(string id)
-         {
+        public async Task<IActionResult> GetDownload(string id)
+        {
             await Db.Connection.OpenAsync();
             var query = new TunesQuery(Db);
 
@@ -97,10 +83,10 @@ namespace TuneSyncAPI.Controllers
             if (dlTune == null)
                 return NotFound();
 
-            FileStream stream = new FileStream(musicPath + dlTune.Path, FileMode.Open, FileAccess.Read);
+            FileStream stream = new FileStream(MusicPath + dlTune.Path, FileMode.Open, FileAccess.Read);
 
-                if (stream == null)
-                    return NotFound(); // returns a NotFoundResult with Status404NotFound response.
+            if (stream == null)
+                return NotFound(); // returns a NotFoundResult with Status404NotFound response.
 
             String[] fileSplit = dlTune.Path.Split("/");
 
@@ -111,8 +97,8 @@ namespace TuneSyncAPI.Controllers
             else
                 fileName = dlTune.Path;
 
-                return File(stream, "application/octet-stream", fileName); // returns a FileStreamResult
-            }
+            return File(stream, "application/octet-stream", fileName); // returns a FileStreamResult
+        }
 
         //GET tunes/
         [HttpGet]
@@ -126,6 +112,5 @@ namespace TuneSyncAPI.Controllers
             Tunes retTunes = new Tunes(listTune);
             return new JsonResult(retTunes);
         }
-
     }
 }
