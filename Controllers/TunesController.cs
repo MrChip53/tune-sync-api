@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TuneSyncAPI.Controllers
@@ -31,11 +29,11 @@ namespace TuneSyncAPI.Controllers
             var tunes = await query.ReadAllTunesAsync();
             var dbFileList = tunes.Select(tune => tune.Path).ToList();
 
-            List<String> folderFileList = Util.scanDirectory(MusicPath);
+            var folderFileList = Util.scanDirectory(MusicPath);
 
-            foreach (String file in folderFileList)
+            foreach (var file in folderFileList)
             {
-                String newFile = file.Replace(MusicPath, "");
+                var newFile = file.Replace(MusicPath, "");
 
                 if (!dbFileList.Contains(newFile))
                 {
@@ -50,7 +48,8 @@ namespace TuneSyncAPI.Controllers
                             strHash = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                         }
                     }
-
+                    
+                    // TODO add support for title and artist here
                     await query.InsertAsync(newFile, strHash);
                 }
                 else
@@ -58,10 +57,10 @@ namespace TuneSyncAPI.Controllers
                     if (newFile.EndsWith(".mp3"))
                     {
                         var tune = tunes.Single(p => p.Path == newFile);
-                        if (tune.Artist == string.Empty || tune.Title == string.Empty)
+                        if (string.IsNullOrEmpty(tune.Artist) || string.IsNullOrEmpty(tune.Title))
                         {
                             var tagFile = TagLib.File.Create(MusicPath + newFile);
-                            await query.UpdateTitleArtistAsync(tune.ID, string.Join(",", tagFile.Tag.AlbumArtists),
+                            await query.UpdateTitleArtistAsync(tune.Id, string.Join(",", tagFile.Tag.AlbumArtists),
                                 tagFile.Tag.Title);
                         }
                     }
@@ -71,33 +70,68 @@ namespace TuneSyncAPI.Controllers
             return new JsonResult(new ReturnStatus("ok"));
         }
 
-        //GET tunes/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetDownload(string id)
+        // GET tunes/grab/{id}
+        [HttpGet("grab/{id}")]
+        public async Task<IActionResult> GetDownload(int id)
         {
             await Db.Connection.OpenAsync();
             var query = new TunesQuery(Db);
 
-            Tune dlTune = await query.GetTuneByIdAsync(Int32.Parse(id));
+            try
+            {
+                var dlTune = await query.GetTuneByIdAsync(id);
 
-            if (dlTune == null)
-                return NotFound();
+                if (dlTune == null)
+                    return NotFound();
 
-            FileStream stream = new FileStream(MusicPath + dlTune.Path, FileMode.Open, FileAccess.Read);
+                var stream = new FileStream(MusicPath + dlTune.Path, FileMode.Open, FileAccess.Read);
 
-            if (stream == null)
-                return NotFound(); // returns a NotFoundResult with Status404NotFound response.
+                var fileSplit = dlTune.Path.Split("/");
+                
+                var fileName = fileSplit.Length > 1 ? fileSplit[^1] : dlTune.Path;
 
-            String[] fileSplit = dlTune.Path.Split("/");
+                return File(stream, "application/octet-stream", fileName); // returns a FileStreamResult
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Error with request: Improper ID.");
+            }
+            catch (IOException)
+            {
+                return BadRequest("Error with request.");
+            }
+            
+        }
+        
+        // GET tunes/delete/{id}
+        [HttpGet("delete/{id}")]
+        public async Task<IActionResult> DeleteTune(int id)
+        {
+            await Db.Connection.OpenAsync();
+            var query = new TunesQuery(Db);
 
-            String fileName;
+            try
+            {
+                var dlTune = await query.GetTuneByIdAsync(id);
 
-            if (fileSplit.Length > 1)
-                fileName = fileSplit[fileSplit.Length - 1];
-            else
-                fileName = dlTune.Path;
+                if (dlTune == null)
+                    return NotFound();
 
-            return File(stream, "application/octet-stream", fileName); // returns a FileStreamResult
+                System.IO.File.Delete(MusicPath + dlTune.Path);
+
+                await query.DeleteTune(id);
+
+                return new OkResult();
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Error with request: Improper ID.");
+            }
+            catch (IOException)
+            {
+                return BadRequest("Error with request.");
+            }
+            
         }
 
         //GET tunes/
@@ -107,9 +141,9 @@ namespace TuneSyncAPI.Controllers
             await Db.Connection.OpenAsync();
             var query = new TunesQuery(Db);
 
-            List<Tune> listTune = await query.ReadAllTunesAsync();
+            var listTune = await query.ReadAllTunesAsync();
 
-            Tunes retTunes = new Tunes(listTune);
+            var retTunes = new Tunes(listTune);
             return new JsonResult(retTunes);
         }
     }

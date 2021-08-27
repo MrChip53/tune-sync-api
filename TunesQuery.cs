@@ -11,7 +11,6 @@ namespace TuneSyncAPI
 {
     public class TunesQuery
     {
-
         private AppDB Db { get; }
 
         public TunesQuery(AppDB appDb)
@@ -32,7 +31,7 @@ namespace TuneSyncAPI
             var result = await ReadAllAsync(await cmd.ExecuteReaderAsync());
             return result.Count > 0 ? result[0] : null;
         }
-        
+
         public async Task<Tune> GetTuneByPathAsync(string path)
         {
             await using var cmd = Db.Connection.CreateCommand();
@@ -54,7 +53,7 @@ namespace TuneSyncAPI
             BindParams(cmd, path, hash);
             await cmd.ExecuteNonQueryAsync();
         }
-        
+
         public async Task UpdateTitleArtistAsync(int id, string artist, string title)
         {
             await using var cmd = Db.Connection.CreateCommand();
@@ -111,12 +110,27 @@ namespace TuneSyncAPI
                 while (await reader.ReadAsync())
                 {
                     var tune = new Tune(reader);
-                    
+
                     tunes.Add(tune);
                 }
             }
+
             return tunes;
         }
 
+        public async Task DeleteTune(int id)
+        {
+            var cmd = Db.Connection.CreateCommand();
+            cmd.CommandText = @"DELETE FROM `tunes` where ID=@id;";
+            
+            cmd.Parameters.Add(new MySqlParameter
+            {
+                ParameterName = "@id",
+                DbType = DbType.Int32,
+                Value = id,
+            });
+
+            var reader = await cmd.ExecuteReaderAsync();
+        }
     }
 }

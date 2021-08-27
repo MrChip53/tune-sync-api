@@ -19,9 +19,7 @@ namespace TuneSyncAPI
 
             foreach (String directory in folderList)
             {
-                //string[] files = Directory.GetFiles(directory);
-
-                List<String> files = scanDirectory(directory);
+	            List<String> files = scanDirectory(directory);
 
                 foreach (String file in files)
                 {

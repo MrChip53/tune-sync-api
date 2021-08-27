@@ -30,14 +30,14 @@ namespace TuneSyncAPI
 
         public Tune(DbDataReader reader)
         {
-            ID = reader.GetInt32(0);
+            Id = reader.GetInt32(0);
             Path = reader.GetString(1);
             Hash = reader.GetString(2);
             Artist = reader.GetValue(3) is DBNull ? string.Empty : reader.GetString(3);
             Title = reader.GetValue(4) is DBNull ? string.Empty : reader.GetString(4);
         }
 
-        public int ID { get; }
+        public int Id { get; }
         public string Path { get; }
         public string Hash { get; }
         public string Title { get; }
